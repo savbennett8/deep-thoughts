@@ -1,4 +1,5 @@
 const { User, Thought } = require('../models');
+const { AuthenticationError } = require('apollo-server-express');
 
 //resolver can accept 4 arguments in order:
 //parent, args, context, & info
@@ -30,6 +31,30 @@ const resolvers = {
         //get a single thought by _id
         thought: async (parent, { _id }) => {
             return Thought.findOne({ _id });
+        }
+    },
+
+    Mutation: {
+        addUser: async (parent, args) => {
+            const user = await User.create(args);
+
+            return user;
+        },
+
+        login: async (parent, { email, password }) => {
+            const user = await User.findOne({ email });
+
+            if (!user) {
+                throw new AuthenticationError('Incorrect credentials');
+            }
+
+            const correctPw = await user.isCorrectPassword(password);
+
+            if (!correctPw) {
+                throw new AuthenticationError('Incorrect credentials');
+            }
+
+            return user;
         }
     }
 };
